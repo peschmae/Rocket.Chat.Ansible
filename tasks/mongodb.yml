@@ -5,14 +5,18 @@
     apt_key:
       keyserver: "{{ rocket_chat_mongodb_keyserver }}"
       id: "{{ rocket_chat_mongodb_gpg_key }}"
-    when: ansible_os_family == "Debian"
+    when: 
+      - ansible_os_family == "Debian"
+      - rocket_chat_mongodb_add_apt_repo|bool
     tags: repo
 
   - name: Ensure the MongoDB repository is present
     apt_repository:
       repo: "{{ rocket_chat_mongodb_apt_repo }}"
       state: present
-    when: ansible_os_family == "Debian"
+    when: 
+      - ansible_os_family == "Debian"
+      - rocket_chat_mongodb_add_apt_repo|bool
     tags: repo
 
   - name: Ensure MongoDB Server is present
@@ -23,13 +27,13 @@
   - name: Deploy MongoDB service configuration
     template:
       src: "{{ rocket_chat_mongodb_config_template }}"
-      dest: /etc/mongod.conf
+      dest: "/etc/{{rocket_chat_mongodb_service}}.conf"
     notify: Restart the MongoDB service
 
   - meta: flush_handlers
 
   - name: Ensure the MongoDB service is started/enabled
     service:
-      name: mongod
+      name: "{{rocket_chat_mongodb_service}}"
       state: started
       enabled: yes
